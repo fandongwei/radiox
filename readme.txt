@@ -1,10 +1,10 @@
 # @author Dongwei Fan <fandongwei@nao.cas.cn> http://www.lamost.org/~dwfan/
 # sponsored by NSFC (National Natural Science Foundation of China) No. 11503051
-# Institue: National Astronomical Observatories, Chinese Academy of Sciences
+# Institute: National Astronomical Observatories, Chinese Academy of Sciences
 # and also from Chinese Virtual Observatory http://www.china-vo.org/
 # please cite http://mnras.oxfordjournals.org/content/451/2/1299
 
-Data files should be end with an empty line, especially the radioxresulttable. Sometimes, the program could not correctly identify the last data row if the row doesn't end with "\n".
+Data files should be end with an empty line, especially the radioxresulttable. Sometimes, the program could not correctly identify the last data row when the row doesn't end with "\n".
 
 1. Install Eigen
 	wget http://bitbucket.org/eigen/eigen/get/3.2.9.tar.bz2
