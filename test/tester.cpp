@@ -19,9 +19,9 @@ int main(int argc, char* argv[]) {
 	//testCommandParser(argc, argv);
 	//testMap();
 	//testSpatialX();
-	//testHypothesis();
+	testHypothesis();
 	//runCstar(argc, argv);
-	runSwireAtlas(argc, argv);
+	//runSwireAtlas(argc, argv);
 	return 0; 
 }
 
@@ -77,11 +77,11 @@ void runcstar(int argc, char* argv[]){
 		LobePrior* pri = NULL;
 		double lobepriorparam[3]; cmd.getDoubleArr("lobepriorparam", lobepriorparam);
 		if(cmd.get("lobepriortype").compare("rayleigh")==0) pri = new LobePrior_Rayleigh(lobepriorparam[0]);
-		int samplecounts[3]; cmd.getIntArr("samplecounts", samplecounts);
+		int samplecount = cmd.getInt("samplecount");
 		double sigmas[3]; cmd.getDoubleArr("sigma", sigmas);
 		
 		//do radiox
-		RadioXRunner::doRadioX(true, pri, sigmas, cmd.get("spatialxresult"), cmd.get("radioxreslut"), samplecounts);
+		RadioXRunner::doRadioX(true, pri, sigmas, cmd.get("spatialxresult"), cmd.get("radioxreslut"), samplecount);
 		delete pri;
 	}else{
 		cout<<"skip radiox"<<endl;
@@ -191,14 +191,14 @@ void runSwireAtlas(int argc, char* argv[]){
 		LobePrior* pri = NULL;
 		double lobepriorparam[3]; cmd.getDoubleArr("lobepriorparam", lobepriorparam);
 		if(cmd.get("lobepriortype").compare("rayleigh")==0) pri = new LobePrior_Rayleigh(lobepriorparam[0]);
-		int samplecounts[3]; cmd.getIntArr("samplecounts", samplecounts);
+		int samplecount=cmd.getInt("samplecounts");
 		double sigmas[3]; cmd.getDoubleArr("sigma", sigmas);
 		bool sym = cmd.getBoolean("symmodel");
 		string infile = cmd.get("spatialxresult");
 		string outfile = cmd.get("radioxreslut");
 
 		//do radiox
-		RadioXRunner::doRadioX(sym, pri, sigmas, infile, outfile, samplecounts);
+		RadioXRunner::doRadioX(sym, pri, sigmas, infile, outfile, samplecount);
 		delete pri;
 		t2 = clock(); printf("radiox done! takes %f second\n",float(t2 - t1) / CLOCKS_PER_SEC);t1=t2;
 	}else{

@@ -70,212 +70,166 @@ double Hypothesis::get1stPrior(){
 	if(NULL != rlobes2) ex++;
 	return pow(Constants::WholeSphereInSquareArcsec, ex);
 }
-
-void Hypothesis::likelihoodSym(LobePrior* pri, int* sampleCounts, double& likelihood, double& likelihood_err){
-	using namespace std;
+void Hypothesis::likelihoodSym(LobePrior* pri, int sampleCount, double& likelihood, double& likelihood_err) {
+	//using namespace std;
 	Gaussian goptical = optical->getGaussian(*optical);
-	
-	int lobescount = 0;	
-	if(NULL != rlobes1) lobescount++;
-	if(NULL != rlobes2) lobescount++;
-	
-	if(0==lobescount){
+
+	int lobescount = 0;
+	if (NULL != rlobes1) lobescount++;
+	if (NULL != rlobes2) lobescount++;
+
+	if (0 == lobescount) {
 		double int1 = 1;
-		if(NULL != rcore){
+		if (NULL != rcore) {
 			Gaussian grcore = rcore->getGaussian(*optical);
 			Gaussian gm = goptical.multiply(grcore, false);
-			//cout<<"goptical.M="<<goptical.M<<endl<<"goptical.F="<<goptical.F<<endl;
-			//cout<<"grcore.M="<<grcore.M<<endl<<"grcore.F="<<grcore.F<<endl;
-			//cout<<"gm.M="<<gm.M<<endl<<"gm.F="<<gm.F<<", gm.S="<<gm.S<<endl;
 			int1 = get1stPrior() * gm.S;
 		}
 		this->likelihood = likelihood = log10(int1);
 		this->likelihood_err = likelihood_err = 0;
 		return;
-		//Eigen::VectorXd ret(2);
-		//ret<<log10(int1), 0;
-		//this->result=ret;
-		//return ret;
 	}
-	double sum0 = 0;
-	double sum0s = 0;
-    //printf("\noptical %lf, %lf, %lf\n", goptical.x(), goptical.y(), goptical.sigma());
 	Gaussian first = goptical;
-	if(NULL != rcore){
+	if (NULL != rcore) {
 		Gaussian grcore = rcore->getGaussian(*optical);
 		first = goptical.multiply(grcore, false);
-		//printf("\nradio core %lf, %lf, %lf\n", grcore.x(), grcore.y(), grcore.sigma());
 	}
-	//printf("first.S=%.14lf\n", first.S);
 	Eigen::MatrixXd sigma0 = first.F.inverse(), sigma1;
-	
+
 	Gaussian second;
-	if(1==lobescount){
+	if (1 == lobescount) {
 		second = rlobes1->getGaussian(*optical);
-		//printf("\nradio lobe1 %lf, %lf, %lf\n", second.x(), second.y(), second.sigma());
 		sigma1 = second.F.inverse();
-	}else if(2==lobescount){
-		//Gaussian g1 = rlobes1->getGaussian(*optical);
-		//printf("\nradio lobe1 %lf, %lf, %lf\n", g1.x(), g1.y(), g1.sigma());
-		//Gaussian g2 = rlobes2->getGaussian(*optical);
-		//printf("\nradio lobe2 %lf, %lf, %lf\n", g2.x(), g2.y(), g2.sigma());
 	}
-	
+	else if (2 == lobescount) {
+	}
+
 	Ran1 random;
 	GaussianRandom2D rand0(&first.M, &sigma0, &random);
-	
-	for(int i=0; i<sampleCounts[0]; i++){
+
+	double sum0 = 0;
+	double sum0s = 0;
+	for (int i = 0; i < sampleCount; i++) {
 		Eigen::VectorXd m0 = rand0.nextSample();
-		//printf("m0=(%.14lf,%.14lf),", m0(0,0), m0(1,0));
-			
-		double sum1 = 0;
-		double int1=1;
-		if(1==lobescount){
+		double p = 0;
+		if (1 == lobescount) {
 			GaussianRandom2D rand1(&second.M, &sigma1, &random);
-			for(int j=0;j<sampleCounts[1]; j++){
-				Eigen::VectorXd m1 = rand1.nextSample();
-				double r2 = (m0-m1).squaredNorm();
-				sum1 += pri->prior(r2);
-			}
-			int1 = sum1/sampleCounts[1];
-		}else if(2==lobescount){
+			Eigen::VectorXd m1 = rand1.nextSample();
+			double r2 = (m0 - m1).squaredNorm();
+			p = pri->prior(r2);
+		}
+		else if (2 == lobescount) {
 			Eigen::VectorXd m02 = m0 * 2;
 			Gaussian grl1 = rlobes1->getGaussian(*optical);
 			Gaussian grl2 = rlobes2->getGaussian(*optical);
-			second = Det(m02(0,0) - grl2.x(), m02(1,0)-grl2.y(), grl2.sigma());
+			second = Det(m02(0, 0) - grl2.x(), m02(1, 0) - grl2.y(), grl2.sigma());
 			second = second.multiply(grl1, false);
 			//printf("second.S=%.14e,",second.S);
 			sigma1 = second.F.inverse();
 			GaussianRandom2D rand1(&second.M, &sigma1, &random);
-			for(int j=0;j<sampleCounts[1];j++){
-				Eigen::VectorXd m1 = rand1.nextSample();
-				double r2 = (m0-m1).squaredNorm();
-				sum1 += pri->prior(r2);
-			}
-			int1 = sum1 * second.S / sampleCounts[1];
+			Eigen::VectorXd m1 = rand1.nextSample();
+			double r2 = (m0 - m1).squaredNorm();
+			p = pri->prior(r2);
 		}
-		//printf("int1=%.14e,", int1);
-		sum0 += int1;
-		sum0s += int1*int1;
+		sum0 += p;
+		sum0s += p * p;
 	}
 	double firstprior = get1stPrior();
-	//printf("\nhyp 1st prior = %lf\n", firstprior);
-	sum0 = sum0 * first.S * firstprior / sampleCounts[0];
-	sum0s = firstprior * firstprior * first.S * first.S * sum0s / sampleCounts[0];
-	sum0s = sqrt(abs(sum0s - sum0*sum0)/sampleCounts[0]);
-	this->likelihood_err = likelihood_err = sum0s / sum0 /log(10);
+	sum0 = sum0 * first.S * firstprior / sampleCount;
+	sum0s = firstprior * firstprior * first.S * first.S * sum0s / sampleCount;
+	sum0s = sqrt(abs(sum0s - sum0 * sum0) / sampleCount);
+	this->likelihood_err = likelihood_err = sum0s / sum0 / log(10);
 	this->likelihood = likelihood = log10(sum0);
-	
-	//Eigen::VectorXd ret(2);
-	//ret<<log10(sum0), err;
-	//this->result=ret;
-	//return ret;
 }
-void Hypothesis::likelihoodAsym(LobePrior* pri, int* sampleCounts, double ksigma, double& likelihood, double& likelihood_err){
+void Hypothesis::likelihoodAsym(LobePrior* pri, int sampleCount, double ksigma, double& likelihood, double& likelihood_err) {
 	using namespace std;
 	Gaussian goptical = optical->getGaussian(*optical);
-	
-	int lobescount = 0;	
-	if(NULL != rlobes1) lobescount++;
-	if(NULL != rlobes2) lobescount++;
-	
-	if(0==lobescount){
+
+	int lobescount = 0;
+	if (NULL != rlobes1) lobescount++;
+	if (NULL != rlobes2) lobescount++;
+
+	if (0 == lobescount) {
 		double int1 = 1;
-		if(NULL != rcore){
+		if (NULL != rcore) {
 			Gaussian grcore = rcore->getGaussian(*optical);
 			Gaussian gm = goptical.multiply(grcore, false);
-			//cout<<"goptical.M="<<goptical.M<<endl<<"goptical.F="<<goptical.F<<endl;
-			//cout<<"grcore.M="<<grcore.M<<endl<<"grcore.F="<<grcore.F<<endl;
-			//cout<<"gm.M="<<gm.M<<endl<<"gm.F="<<gm.F<<", gm.S="<<gm.S<<endl;
 			int1 = get1stPrior() * gm.S;
 		}
 		this->likelihood = likelihood = log10(int1);
 		this->likelihood_err = likelihood_err = 0;
 		return;
 	}
-	double sum0 = 0;
-	double sum0s = 0;
-    //printf("\noptical %lf, %lf, %lf\n", goptical.x(), goptical.y(), goptical.sigma());
 	Gaussian first = goptical;
-	if(NULL != rcore){
+	if (NULL != rcore) {
 		Gaussian grcore = rcore->getGaussian(*optical);
 		first = goptical.multiply(grcore, false);
-		//printf("\nradio core %lf, %lf, %lf\n", grcore.x(), grcore.y(), grcore.sigma());
 	}
 	Eigen::MatrixXd sigma0 = first.F.inverse(), sigma1;
-	
+
 	Gaussian second;
-	if(1==lobescount){
+	if (1 == lobescount) {
 		second = rlobes1->getGaussian(*optical);
-		//printf("\nradio lobe1 %lf, %lf, %lf\n", second.x(), second.y(), second.sigma());
 		sigma1 = second.F.inverse();
-	}else if(2==lobescount){
-		//Gaussian g1 = rlobes1->getGaussian(*optical);
-		//printf("\nradio lobe1 %lf, %lf, %lf\n", g1.x(), g1.y(), g1.sigma());
-		//Gaussian g2 = rlobes2->getGaussian(*optical);
-		//printf("\nradio lobe2 %lf, %lf, %lf\n", g2.x(), g2.y(), g2.sigma());
 	}
-	
+	else if (2 == lobescount) {
+	}
+
 	Ran1 random;
 	GaussianRandom2D rand0(&first.M, &sigma0, &random);
-	
-	for(int i=0; i<sampleCounts[0]; i++){
-		double m0x,m0y;
+
+	double sum0 = 0;
+	double sum0s = 0;
+	for (int i = 0; i < sampleCount; i++) {
+		double m0x, m0y;
 		rand0.nextSample(m0x, m0y);
-			
-		double sum1 = 0;
-		double int1=1;
-		if(1==lobescount){
+
+		double p = 0;
+		if (1 == lobescount) {
 			GaussianRandom2D rand1(&second.M, &sigma1, &random);
-			for(int j=0;j<sampleCounts[1]; j++){
-				double m1x,m1y;
-				rand1.nextSample(m1x,m1y);
-				double r2 = (m0x-m1x)*(m0x-m1x)+(m0y-m1y)*(m0y-m1y);
-				sum1 += pri->prior(r2);
+			{
+				double m1x, m1y;
+				rand1.nextSample(m1x, m1y);
+				double r2 = (m0x - m1x)*(m0x - m1x) + (m0y - m1y)*(m0y - m1y);
+				p = pri->prior(r2);
 			}
-			int1 = sum1/sampleCounts[1];
-		}else if(2==lobescount){
+		}
+		else if (2 == lobescount) {
 			Gaussian grl1 = rlobes1->getGaussian(*optical);
 			Gaussian grl2 = rlobes2->getGaussian(*optical);
 			double grl2x = grl2.x();
 			double grl2y = grl2.y();
 			double grl2sigma = grl2.sigma();
-			for(int c=0;c<sampleCounts[1]; c++){
-				double k = random.nextGasdev(0, ksigma);
-				
-				double sum2=0;
-				double int2=0;
-				if(k<-1)continue;//tophat for the k
-				
-				double m0_2kx=m0x*(2+k);
-				double m0_2ky=m0y*(2+k);
-				
-				double k1=k+1;
-				second = Det((m0_2kx - grl2x)/k1, (m0_2ky-grl2y)/k1, grl2sigma/k1).multiply(grl1, false);
-				sigma1 = second.F.inverse();
-				GaussianRandom2D rand1(&second.M, &sigma1, &random);
-				for(int j=0;j<sampleCounts[2];j++){
-					double m1x,m1y;
-					rand1.nextSample(m1x,m1y);
-					double r2 = (m0x-m1x)*(m0x-m1x)+(m0y-m1y)*(m0y-m1y);
-					sum2 += pri->prior(r2);
-				}
-				int2 = sum2*second.S/k1/k1/sampleCounts[2];
-				sum1 += int2;
-			}
-			int1 = sum1 / sampleCounts[1];
+
+			double k = random.nextGasdev(0, ksigma);
+
+			double sum2 = 0;
+			double int2 = 0;
+			if (k < -1)continue;//tophat for the k
+
+			double m0_2kx = m0x * (2 + k);
+			double m0_2ky = m0y * (2 + k);
+
+			double k1 = k + 1;
+			second = Det((m0_2kx - grl2x) / k1, (m0_2ky - grl2y) / k1, grl2sigma / k1).multiply(grl1, false);
+			sigma1 = second.F.inverse();
+			GaussianRandom2D rand1(&second.M, &sigma1, &random);
+			double m1x, m1y;
+			rand1.nextSample(m1x, m1y);
+			double r2 = (m0x - m1x)*(m0x - m1x) + (m0y - m1y)*(m0y - m1y);
+			p = pri->prior(r2);
+			p *= second.S;//S is the integral of two Gaussian PDF multiplication, it is not 1
 		}
-		sum0 += int1;
-		sum0s += int1*int1;
+		sum0 += p;
+		sum0s += p * p;
 	}
 	double firstprior = get1stPrior();
-	sum0 = sum0 * first.S * firstprior / sampleCounts[0];
-	sum0s = firstprior * firstprior * first.S * first.S * sum0s / sampleCounts[0];
-	sum0s = sqrt(abs(sum0s - sum0*sum0)/sampleCounts[0]);
-	this->likelihood_err = likelihood_err = sum0s / sum0 /log(10);
+	sum0 = sum0 * first.S * firstprior / sampleCount;
+	sum0s = firstprior * firstprior * first.S * first.S * sum0s / sampleCount;
+	sum0s = sqrt(abs(sum0s - sum0 * sum0) / sampleCount);
+	this->likelihood_err = likelihood_err = sum0s / sum0 / log(10);
 	this->likelihood = likelihood = log10(sum0);
 }
-
 std::string Hypothesis::combiStr(){
 	std::string rid;
 	char buf[255];

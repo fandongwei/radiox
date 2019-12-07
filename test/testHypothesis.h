@@ -151,8 +151,8 @@ void testLikelihood(){
 	LobePrior* pri = new LobePrior_Rayleigh(44);
 	printf("prior variance = %.14lf\n", pri->variance());
 	
-	int sampleCounts[3]={40, 30, 80};//{ 80, 50, 180 };
-	printf("sampleCounts = %d, %d, %d\n", sampleCounts[0], sampleCounts[1], sampleCounts[2]);
+	int sampleCount=2000;
+	printf("sampleCount = %d\n", sampleCount);
 	
 	
 	vector<Hypothesis> hyps = Hypothesis::generateHypList(&optical, radios);
@@ -163,7 +163,7 @@ void testLikelihood(){
 		it->print();
 		double likelihood, likelihood_err;
 		//it->likelihoodSym(pri, sampleCounts, likelihood, likelihood_err);
-		it->likelihoodAsym(pri, sampleCounts, 0.2, likelihood, likelihood_err);
+		it->likelihoodAsym(pri, sampleCount, 0.2, likelihood, likelihood_err);
 		printf("\t%.4lf\t%lf", likelihood, likelihood_err);
 		t2 = clock(); printf("\t takes %f second\n", float(t2 - t1) / CLOCKS_PER_SEC);t1=t2;
 	}
@@ -283,8 +283,8 @@ void testRunRadioX(){
 	LobePrior* pri = new LobePrior_Rayleigh(44);
 	printf("prior variance = %.14lf\n", pri->variance());
 	
-	int sampleCounts[3]={40, 30, 80};//{ 80, 50, 180 };
-	printf("sampleCounts = %d, %d, %d\n", sampleCounts[0], sampleCounts[1], sampleCounts[2]);
+	int sampleCount = 2000;
+	printf("sampleCounts = %d\n", sampleCount);
 	
 	SpatialXResultTable tbl("../data/cstar/cstar_res_cpp.csv", false);
 	cout<<"reading ../data/cstar/cstar_res_cpp.csv"<<endl;
@@ -308,7 +308,7 @@ void testRunRadioX(){
 		for(std::vector<Hypothesis>::iterator it=hyps.begin();it!=hyps.end();it++){
 			double likelihood, likelihood_err;
 			//it->likelihoodAsym(pri, sampleCounts, 0.2, likelihood, likelihood_err);
-			it->likelihoodSym(pri, sampleCounts, likelihood, likelihood_err);
+			it->likelihoodSym(pri, sampleCount, likelihood, likelihood_err);
 			sprintf(buf, ",%lf,%lf\n", likelihood, likelihood_err);
 			string str = it->combiStr();
 			str += buf;
@@ -325,8 +325,8 @@ void testRunRadioX2(){
 	LobePrior* pri = new LobePrior_Rayleigh(44);
 	printf("prior variance = %.14lf\n", pri->variance());
 	
-	int sampleCounts[3]={40, 30, 80};//{ 80, 50, 180 };
-	printf("sampleCounts = %d, %d, %d\n", sampleCounts[0], sampleCounts[1], sampleCounts[2]);
+	int sampleCount = 2000;
+	printf("sampleCounts = %d\n", sampleCount);
 	
 	double sigmas[3]={0.2, 0.788035, 0.5};
 	
@@ -334,7 +334,7 @@ void testRunRadioX2(){
 	cout<<"reading ../data/cstar/cstar_res_cpp.csv"<<endl;
 	vector<SpatialXResult> com;
 	cout<<"doing radiox"<<endl;
-	RadioXRunner::doRadioX(true, pri, sigmas, tbl, "../data/cstar/radiox.csv", sampleCounts);
+	RadioXRunner::doRadioX(true, pri, sigmas, tbl, "../data/cstar/radiox.csv", sampleCount);
 	cout<<"done"<<endl;
 }
 

@@ -29,8 +29,8 @@ public:
 	double likelihood, likelihood_err;
 public:
 	double get1stPrior();
-	void likelihoodSym(LobePrior* pri, int* sampleCounts, double& likelihood, double& likelihood_err);
-	void likelihoodAsym(LobePrior* pri, int* sampleCounts, double ksigma, double& likelihood, double& likelihood_err);
+	void likelihoodSym(LobePrior* pri, int sampleCount, double& likelihood, double& likelihood_err);
+	void likelihoodAsym(LobePrior* pri, int sampleCount, double ksigma, double& likelihood, double& likelihood_err);
 	//generate all possible combinations
 	static std::vector<Hypothesis> generateHypList(SpatialPoint* optical, std::vector<SpatialPoint*>& radios);
 	void print();

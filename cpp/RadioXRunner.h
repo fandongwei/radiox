@@ -13,8 +13,8 @@ please cite http://mnras.oxfordjournals.org/content/451/2/1299
 class LobePrior;
 class RadioXRunner{
 public:
-	static void doRadioX(bool sym, LobePrior* pri, double* sigmas, SpatialXResultTable& tbl, std::string outfile, int sampleCounts[]);
-	static void doRadioX(bool sym, LobePrior* pri, double* sigmas, std::string infile, std::string outfile, int sampleCounts[]);
+	static void doRadioX(bool sym, LobePrior* pri, double* sigmas, SpatialXResultTable& tbl, std::string outfile, int sampleCount);
+	static void doRadioX(bool sym, LobePrior* pri, double* sigmas, std::string infile, std::string outfile, int sampleCount);
 	static void analysisResult(RadioXResultTable& tbl, std::string outfile);
 	//static void analysisResult0(RadioXResultTable& tbl, std::string outfile);
 	static void analysisResult(std::string infile, std::string outfile);

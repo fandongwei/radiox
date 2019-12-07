@@ -18,7 +18,7 @@ please cite http://mnras.oxfordjournals.org/content/451/2/1299
 
 using namespace std;
 
-void RadioXRunner::doRadioX(bool sym, LobePrior* pri, double* sigmas, SpatialXResultTable& tbl, std::string outfile, int sampleCounts[]){
+void RadioXRunner::doRadioX(bool sym, LobePrior* pri, double* sigmas, SpatialXResultTable& tbl, std::string outfile, int sampleCount){
 	vector<SpatialXResult> com;
 	
 	FILE* pf = fopen(outfile.c_str(), "w");
@@ -41,7 +41,7 @@ void RadioXRunner::doRadioX(bool sym, LobePrior* pri, double* sigmas, SpatialXRe
 		if(sym){
 			for(std::vector<Hypothesis>::iterator it=hyps.begin();it!=hyps.end();it++){
 				double likelihood, likelihood_err;
-				it->likelihoodSym(pri, sampleCounts, likelihood, likelihood_err);
+				it->likelihoodSym(pri, sampleCount, likelihood, likelihood_err);
 				sprintf(buf, ",%lf,%lf\n", likelihood, likelihood_err);
 				string str = it->combiStr() + buf;
 				fwrite(str.c_str(), 1, str.size(), pf);
@@ -50,7 +50,7 @@ void RadioXRunner::doRadioX(bool sym, LobePrior* pri, double* sigmas, SpatialXRe
 			for(std::vector<Hypothesis>::iterator it=hyps.begin();it!=hyps.end();it++){
 				//it->print();
 				double likelihood, likelihood_err;
-				it->likelihoodAsym(pri, sampleCounts, sigmas[2], likelihood, likelihood_err);
+				it->likelihoodAsym(pri, sampleCount, sigmas[2], likelihood, likelihood_err);
 				sprintf(buf, ",%lf,%lf\n", likelihood, likelihood_err);
 				string str = it->combiStr() + buf;
 				fwrite(str.c_str(), 1, str.size(), pf);
@@ -63,9 +63,9 @@ void RadioXRunner::doRadioX(bool sym, LobePrior* pri, double* sigmas, SpatialXRe
 	fclose(pf);
 }
 
-void RadioXRunner::doRadioX(bool sym, LobePrior* pri, double* sigmas, string infile, string outfile, int sampleCounts[]){
+void RadioXRunner::doRadioX(bool sym, LobePrior* pri, double* sigmas, string infile, string outfile, int sampleCount){
 	SpatialXResultTable tbl(infile, false);
-	doRadioX(sym, pri, sigmas, tbl, outfile, sampleCounts);
+	doRadioX(sym, pri, sigmas, tbl, outfile, sampleCount);
 }
 /*
 void RadioXRunner::analysisResult0(RadioXResultTable& tbl, string outfile){

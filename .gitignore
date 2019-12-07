@@ -10,4 +10,4 @@ Bin/
 swig/
 *.tlog
 *.sdf
-
+.vs/
